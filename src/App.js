@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import _ from 'lodash';
-import { Game } from './Game';
+import { Game, drawBoard } from './Game';
+import './App.css';
 
 // Firebase App (the core Firebase SDK) is always required and must be listed first
 import * as firebase from "firebase/app";
@@ -40,6 +41,16 @@ class App extends Component {
     this.handleChange = this.handleChange.bind(this);
     this.handleCheckBox = this.handleCheckBox.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.drawBackground = this.drawBackground.bind(this);
+  }
+
+  componentDidMount() {
+    const canvas = this.refs.background;
+    if (!canvas) {
+      return;
+    }
+    const ctx = canvas.getContext("2d")
+    drawBoard(ctx, 20, 20)
   }
 
   handleChange(event) {
@@ -63,13 +74,19 @@ class App extends Component {
         width: this.state.width,
         height: this.state.height,
         gravity: this.state.gravity, 
-        target: this.state.target
+        target: this.state.target, 
       }]
     });
 
     window.location.href = `/game?id=${gameId}`
     event.preventDefault();
   }
+
+  drawBackground() {
+    var canvas = this.canvasRef.current;
+    var ctx = canvas.getContext('2d');
+    return drawBoard(ctx, 10, 10)
+  };
 
   render() {
     if (this.state.gameId) {
@@ -79,25 +96,34 @@ class App extends Component {
       )
     } else {
       return (
+        <div>
+        <canvas ref='background' width="1600" height="800"></canvas>
+        <div id='startgameform'>
         <form onSubmit={this.handleSubmit}>
           <label>
-            Connect #?
+            Connect X?
             <input type="number" value={this.state.target} onChange={this.handleChange} />
           </label>
+          <br />
           <label>
-            Gravity?
+            Gravity? 
             <input type="checkbox" onChange={this.handleCheckBox} checked={this.state.checked} />
           </label>
+          <br />
           <label>
-            Width?
+            Board width: 
             <input type="number" name="width" value={this.state.width} onChange={this.handleChange} />
           </label>
+          <br />
           <label>
-            Height?
+            Board height:  
             <input type="number" name="height" value={this.state.height} onChange={this.handleChange} />
           </label>
+          <br />
           <input type="submit" value="Submit" />
         </form>
+        </div>
+        </div>
       );
     }
   }

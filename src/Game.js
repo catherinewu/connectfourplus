@@ -1,53 +1,15 @@
 import React, { Component } from 'react';
 import _ from 'lodash';
-// // Firebase App (the core Firebase SDK) is always required and must be listed first
-// import * as firebase from "firebase/app";
-// import "firebase/database";
-
-// const firebaseConfig = {
-//   apiKey: "AIzaSyA75jf95SLU0sXpe-4729-8ST1w9nUBc-k",
-//   authDomain: "connectfourplus-7ce8d.firebaseapp.com",
-//   databaseURL: "https://connectfourplus-7ce8d.firebaseio.com",
-//   projectId: "connectfourplus-7ce8d",
-//   storageBucket: "connectfourplus-7ce8d.appspot.com",
-//   messagingSenderId: "470203261839",
-//   appId: "1:470203261839:web:b66e3580ade864120821fa",
-//   measurementId: "G-5TBX6M4Q92"
-// };
-
-// // Initialize Firebase
-// firebase.initializeApp(firebaseConfig);
-// var database = firebase.database();
 
 const CENTER_OFFSET = 37.5;
 const WIDTH = 75;
 const RADIUS = 30;
-// const GAME_HEIGHT = 7;
-// const GAME_WIDTH = 6;
 
 export class Game extends Component {
   constructor(props) {
-    var { gameId, database } = props;
-    // var board = [
-    //   [0,0,0,0,0,0,0],
-    //   [0,0,0,0,0,0,0],
-    //   [0,0,0,0,0,0,0],
-    //   [0,0,0,0,0,0,0],
-    //   [0,0,0,0,0,0,0],
-    //   [0,0,0,0,0,0,0]];
-
-    // function writeGame(gameId) {
-    //   database.ref('games/' + gameId).set({
-    //     events: [],
-    //   });
-    // }
-
-     
-    // writeGame(gameId);
-
     super(props);
     this.state = {
-      gameId,
+      gameId: this.props.gameId,
     };
 
     this.canvasRef = React.createRef();
@@ -57,7 +19,7 @@ export class Game extends Component {
     this.handleEvent = this.handleEvent.bind(this);
     this.createBoard = this.createBoard.bind(this);
 
-    this.props.database.ref('games/' + gameId + '/events').on("child_added", this.handleEvent);
+    this.props.database.ref('games/' + this.props.gameId + '/events').on("child_added", this.handleEvent);
   }
 
   createBoard(width, height) {
@@ -141,20 +103,21 @@ export class Game extends Component {
   }
 
   getCurrentPlayerColor() {
-    if (this.currentPlayer() === 1) {
-      return 'BLACK';
-    } else {
-      return 'RED';
-    }
+    return (this.currentPlayer() === 1) ? 'BLACK' : 'RED';
   }
 
   render() {
+    var whosturn = `It is Player ${(this.currentPlayer() === 1) ? 1 : 2}'s turn`;
     return (
+        <div>
+        {/* <h3>You're playing connect {this.state.target}!</h3> */}
+        {/* <h3>{whosturn}</h3> */}
         <canvas
           ref={this.canvasRef}
           width="3000" height="3000"
           onClick={(e) => this.handleClick(e)}
           onMouseMove={this.handleMove}></canvas>
+        </div>
     );
   }
 }
@@ -179,7 +142,7 @@ function drawGame(ctx, game, boardWidth, boardHeight) {
   }
 }
 
-function drawBoard(ctx, boardWidth, boardHeight) {
+export function drawBoard(ctx, boardWidth, boardHeight) {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   for (var i = 0; i < boardHeight; i++) {
     for (var j = 0; j < boardWidth; j++) {
