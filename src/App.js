@@ -70,7 +70,7 @@ class App extends Component {
 
   handleCheckBox(e) {
     this.setState({
-      checked: e.target.checked
+      gravity: e.target.checked
     })
   }
 
@@ -122,7 +122,7 @@ class App extends Component {
           <br />
           <label>
             Gravity? 
-            <input type="checkbox" onChange={this.handleCheckBox} checked={this.state.checked} />
+            <input type="checkbox" onChange={this.handleCheckBox} checked={this.state.gravity} />
           </label>
           <br />
           <label>

@@ -14,6 +14,7 @@ export class Game extends Component {
       browserId: null,
       playerNumber: null, // 0 = watching, 1 = black, 2 = red
       gameEnded: false,
+      gravity: false,
     };
 
     this.canvasRef = React.createRef();
@@ -124,9 +125,21 @@ export class Game extends Component {
   handleClick(event) {
     var x = event.pageX,
         y = event.pageY;
-    const [i, j] = getPosition(x, y);
+    let [i, j] = getPosition(x, y);
     console.log('position is ', i, j);
 
+    // adjust for gravity
+    console.log('gravity', this.state.gravity);
+    if (this.state.gravity) {
+      i = -1;
+      for (let xPos = this.state.boardHeight - 1; xPos >= 0; xPos--) {
+        console.log('this.state.game[xPos][j]', this.state.game[xPos][j]);
+        if (this.state.game[xPos][j] === 0) {
+          i = xPos; // lowest unfilled position
+          break;
+        }
+      }
+    }
     // validate turn 
     const currentPlayer = this.currentPlayer();
     const valid = this.validateMove(currentPlayer, i, j);
@@ -142,8 +155,17 @@ export class Game extends Component {
 
   // returns boolean
   validateMove(currentPlayer, i, j) {
+    // todo: check number of players
     if (this.state.gameEnded) {
       window.alert('cannot move -- game has already ended');
+      return false;
+    }
+    console.log('this.state.game[i][j]', this.state.game[i][j]);
+    console.log(typeof this.state.game[i][j]);
+    console.log('i j', i, j);
+    if (this.state.game[i][j] !== 0) {
+      console.log('game is', this.state.game);
+      window.alert('someone has already moved there');
       return false;
     }
     const validPosition = this.state.boardHeight >= 0 && i < this.state.boardHeight && this.state.boardWidth >= 0 && j < this.state.boardWidth;
