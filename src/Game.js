@@ -136,7 +136,7 @@ export class Game extends Component {
     }
     const gameOver = this.checkGameOver(currentPlayer, i, j);
     if (gameOver) {
-      this.state.setState({ gameEnded: true });
+      this.state.gameEnded = true;
     }
   }
 
