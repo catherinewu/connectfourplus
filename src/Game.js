@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import _ from 'lodash';
+import uuid from 'uuid';
 
 const CENTER_OFFSET = 37.5;
 const WIDTH = 75;
@@ -10,6 +11,8 @@ export class Game extends Component {
     super(props);
     this.state = {
       gameId: this.props.gameId,
+      browserId: null,
+      playerNumber: null, // 0 = watching, 1 = black, 2 = red
     };
 
     this.canvasRef = React.createRef();
@@ -18,6 +21,8 @@ export class Game extends Component {
     this.currentPlayer = this.currentPlayer.bind(this);
     this.handleEvent = this.handleEvent.bind(this);
     this.createBoard = this.createBoard.bind(this);
+    this.calculatePlayerNumber = this.calculatePlayerNumber.bind(this);
+    this.validateMove = this.validateMove.bind(this);
 
     this.props.database.ref('games/' + this.props.gameId + '/events').on("child_added", this.handleEvent);
   }
@@ -52,7 +57,43 @@ export class Game extends Component {
   }
 
   componentDidMount() {
+    var id = localStorage.getItem('id');
+    if (!id) {
+      id = uuid.v4();
+      localStorage.setItem('id', id);
+    }
+    this.state.browserId = id;
+
+    this.calculatePlayerNumber();
     this.draw();
+  }
+
+  async calculatePlayerNumber() {
+    console.log('calculatePlayerNumber')
+    const eventref = this.props.database.ref('games/' + this.props.gameId + '/events');
+    const snapshot = await eventref.once('value');
+    const events = snapshot.val();
+    console.log('events', events);
+
+    var playerAddEvents = _.filter(events, x => x.type === 'add_player');
+    var alreadyAdded = _.filter(playerAddEvents, x => x.browserId === this.state.browserId);
+    if (alreadyAdded.length >= 1) {
+      this.state.playerNumber = alreadyAdded[0].playerNumber;
+    } else {
+      console.log('playerAddEvents?', playerAddEvents);
+      if (playerAddEvents.length >= 2) {
+        window.alert('sorry, enough players already. you are just watching');
+        this.state.playerNumber = 0;
+      } else {
+        window.alert('you are added to the game as player 2');
+        this.props.database.ref('games/' + this.props.gameId + '/events').push({
+          type: 'add_player',
+          browserId: this.state.browserId,
+          playerNumber: 2,
+        });
+        this.state.playerNumber = 2;
+      }
+    }
   }
 
   componentDidUpdate() {
@@ -81,12 +122,29 @@ export class Game extends Component {
     var x = event.pageX,
         y = event.pageY;
     const [i, j] = getPosition(x, y);
-    if (this.state.boardHeight >= 0 && i < this.state.boardHeight && this.state.boardWidth >= 0 && j < this.state.boardWidth) {
-      console.log(i,j);
+    console.log('position is ', i, j);
+
+    // validate turn 
+    const valid = this.validateMove(i, j);
+    if (valid) {
+      console.log('making move');
       this.makeMove(i, j);
-      // fillSpace(this.canvasRef.current.getContext('2d'), i, j, this.getCurrentPlayerColor());
-      // this.getNextPlayer();
     }
+  }
+
+  // returns boolean
+  validateMove(i, j) {
+    const validPosition = this.state.boardHeight >= 0 && i < this.state.boardHeight && this.state.boardWidth >= 0 && j < this.state.boardWidth;
+    if (!validPosition) {
+      window.alert('position is not valid');
+      return false;
+    }
+    const validPlayer = this.currentPlayer() === this.state.playerNumber;
+    if (!validPlayer) {
+      window.alert(`this.currentPlayer ${this.currentPlayer()} does not equal this.state.playerNumber ${this.state.playerNumber}`);
+      return false;
+    }
+    return true;
   }
 
   makeMove(i, j) {

@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import _ from 'lodash';
 import { Game, drawBoard } from './Game';
 import './App.css';
+import uuid from 'uuid';
 
 // Firebase App (the core Firebase SDK) is always required and must be listed first
 import * as firebase from "firebase/app";
@@ -49,8 +50,16 @@ class App extends Component {
     if (!canvas) {
       return;
     }
-    const ctx = canvas.getContext("2d")
-    drawBoard(ctx, 20, 20)
+
+    const ctx = canvas.getContext("2d");
+    drawBoard(ctx, 20, 20);
+
+    var id = localStorage.getItem('id');
+    if (!id) {
+      id = uuid.v4();
+      localStorage.setItem('id', id);
+    }
+    console.log('your id is', id);
   }
 
   handleChange(event) {
@@ -76,6 +85,12 @@ class App extends Component {
         gravity: this.state.gravity, 
         target: this.state.target, 
       }]
+    });
+
+    database.ref('games/' + gameId  + '/events').push({
+      type: 'add_player',
+      browserId: localStorage.getItem('id'),
+      playerNumber: 1,
     });
 
     window.location.href = `/game?id=${gameId}`
