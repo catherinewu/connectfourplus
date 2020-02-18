@@ -13,6 +13,7 @@ export class Game extends Component {
       gameId: this.props.gameId,
       browserId: null,
       playerNumber: null, // 0 = watching, 1 = black, 2 = red
+      gameEnded: false,
     };
 
     this.canvasRef = React.createRef();
@@ -23,6 +24,8 @@ export class Game extends Component {
     this.createBoard = this.createBoard.bind(this);
     this.calculatePlayerNumber = this.calculatePlayerNumber.bind(this);
     this.validateMove = this.validateMove.bind(this);
+    this.checkGameOver = this.checkGameOver.bind(this);
+    this.checkOffset = this.checkOffset.bind(this);
 
     this.props.database.ref('games/' + this.props.gameId + '/events').on("child_added", this.handleEvent);
   }
@@ -125,27 +128,112 @@ export class Game extends Component {
     console.log('position is ', i, j);
 
     // validate turn 
-    const valid = this.validateMove(i, j);
+    const currentPlayer = this.currentPlayer();
+    const valid = this.validateMove(currentPlayer, i, j);
     if (valid) {
       console.log('making move');
       this.makeMove(i, j);
     }
+    const gameOver = this.checkGameOver(currentPlayer, i, j);
+    if (gameOver) {
+      this.state.setState({ gameEnded: true });
+    }
   }
 
   // returns boolean
-  validateMove(i, j) {
+  validateMove(currentPlayer, i, j) {
+    if (this.state.gameEnded) {
+      window.alert('cannot move -- game has already ended');
+      return false;
+    }
     const validPosition = this.state.boardHeight >= 0 && i < this.state.boardHeight && this.state.boardWidth >= 0 && j < this.state.boardWidth;
     if (!validPosition) {
       window.alert('position is not valid');
       return false;
     }
-    const validPlayer = this.currentPlayer() === this.state.playerNumber;
+    const validPlayer = currentPlayer === this.state.playerNumber;
     if (!validPlayer) {
-      window.alert(`this.currentPlayer ${this.currentPlayer()} does not equal this.state.playerNumber ${this.state.playerNumber}`);
+      window.alert(`currentPlayer ${currentPlayer} does not equal this.state.playerNumber ${this.state.playerNumber}`);
       return false;
     }
     return true;
   }
+
+  checkGameOver(currentPlayer, currentRow, currentColumn) {
+    const game = this.state.game;
+    const offsetTuplesToCheck = [{x: -1, y:1}, {x: -1, y:0}, {x:-1, y:-1}, {x:0, y:-1}];
+    for (let i = 0; i < offsetTuplesToCheck.length; i++) {
+      const x = offsetTuplesToCheck[i].x;
+      const y = offsetTuplesToCheck[i].y;
+      const checkOffsetResult = this.checkOffset(currentPlayer, x, y, currentRow, currentColumn);
+      if (checkOffsetResult) {
+        window.alert('GAME WON by player ', self.current_player);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  checkOffset(currentPlayer, offsetX, offsetY, currentRow, currentColumn) {
+    let count = 1;
+
+    let currentX = currentRow + offsetX;
+    let currentY = currentColumn + offsetY;
+
+    while (currentX < this.state.boardWidth && currentX >= 0 && currentY < this.state.boardHeight && currentY >= 0) {
+      if (this.state.game[currentX][currentY] === currentPlayer) {
+        currentX = currentX + offsetX;
+        currentY = currentY + offsetY;
+        count = count + 1;
+      } else {
+        break;
+      } 
+    }
+
+    currentX = currentRow - offsetX * count;
+    currentY = currentColumn - offsetY * count;
+    while (currentX < this.state.boardWidth && currentX >= 0 && currentY < this.state.boardHeight && currentY >= 0) {
+      if (this.state.game[currentX][currentY] === currentPlayer) {
+        currentX = currentX - offsetX;
+        currentY = currentY - offsetY;
+        count = count + 1;
+      } else {
+        break;
+      } 
+    }
+
+    return (count >= 4) ? true: false;
+
+  }
+    //   def check_offset(self, offset_x, offset_y, curr_row, curr_column):
+    //     count = 1
+    //     # up / left
+        
+    //     # traverse up
+    //     curr_x = curr_row + offset_x
+    //     curr_y = curr_column + offset_y
+    //     # while curr_x < self.num_rows - 1 and curr_x > 0 and curr_y < self.num_columns - 1 and curr_y > 0: 
+    //     while curr_x < self.num_rows and curr_x >= 0 and curr_y < self.num_columns and curr_y >= 0: 
+    //         if self.game_board[curr_x][curr_y] == self.current_player:
+    //             curr_x = curr_x + offset_x
+    //             curr_y = curr_y + offset_y
+    //             count = count + 1
+    //         else: 
+    //             break
+    //     print('count after left is', count)
+    //     curr_x = curr_row - offset_x
+    //     curr_y = curr_column - offset_y
+    //     while curr_x < self.num_rows and curr_x >= 0 and curr_y < self.num_columns and curr_y >= 0: 
+    //         if self.game_board[curr_x][curr_y] == self.current_player:
+    //             curr_x = curr_x - offset_x
+    //             curr_y = curr_y - offset_y
+    //             count = count + 1
+    //         else: 
+    //             break
+        
+    //     print('count after right is', count)
+        
+    //     return True if count >= 4 else False
 
   makeMove(i, j) {
     // if (!i || !j) {
