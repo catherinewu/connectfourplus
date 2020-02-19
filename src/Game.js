@@ -160,19 +160,18 @@ export class Game extends Component {
       window.alert('cannot move -- game has already ended');
       return false;
     }
-    console.log('this.state.game[i][j]', this.state.game[i][j]);
-    console.log(typeof this.state.game[i][j]);
-    console.log('i j', i, j);
-    if (this.state.game[i][j] !== 0) {
-      console.log('game is', this.state.game);
-      window.alert('someone has already moved there');
-      return false;
-    }
     const validPosition = this.state.boardHeight >= 0 && i < this.state.boardHeight && this.state.boardWidth >= 0 && j < this.state.boardWidth;
     if (!validPosition) {
       window.alert('position is not valid');
       return false;
     }
+
+    if (this.state.game[i][j] !== 0) {
+      console.log('game is', this.state.game);
+      window.alert('someone has already moved there');
+      return false;
+    }
+
     const validPlayer = currentPlayer === this.state.playerNumber;
     if (!validPlayer) {
       window.alert(`currentPlayer ${currentPlayer} does not equal this.state.playerNumber ${this.state.playerNumber}`);
@@ -227,42 +226,8 @@ export class Game extends Component {
     return (count >= 4) ? true: false;
 
   }
-    //   def check_offset(self, offset_x, offset_y, curr_row, curr_column):
-    //     count = 1
-    //     # up / left
-        
-    //     # traverse up
-    //     curr_x = curr_row + offset_x
-    //     curr_y = curr_column + offset_y
-    //     # while curr_x < self.num_rows - 1 and curr_x > 0 and curr_y < self.num_columns - 1 and curr_y > 0: 
-    //     while curr_x < self.num_rows and curr_x >= 0 and curr_y < self.num_columns and curr_y >= 0: 
-    //         if self.game_board[curr_x][curr_y] == self.current_player:
-    //             curr_x = curr_x + offset_x
-    //             curr_y = curr_y + offset_y
-    //             count = count + 1
-    //         else: 
-    //             break
-    //     print('count after left is', count)
-    //     curr_x = curr_row - offset_x
-    //     curr_y = curr_column - offset_y
-    //     while curr_x < self.num_rows and curr_x >= 0 and curr_y < self.num_columns and curr_y >= 0: 
-    //         if self.game_board[curr_x][curr_y] == self.current_player:
-    //             curr_x = curr_x - offset_x
-    //             curr_y = curr_y - offset_y
-    //             count = count + 1
-    //         else: 
-    //             break
-        
-    //     print('count after right is', count)
-        
-    //     return True if count >= 4 else False
 
   makeMove(i, j) {
-    // if (!i || !j) {
-    //   console.log(i, j)
-    //   console.log('invalid move');
-    //   return;
-    // }
     this.props.database.ref('games/' + this.state.gameId + '/events').push({ type: 'player_move', i, j });
   }
 
