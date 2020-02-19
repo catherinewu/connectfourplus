@@ -197,7 +197,6 @@ export class Game extends Component {
 
   checkOffset(currentPlayer, offsetX, offsetY, currentRow, currentColumn) {
     let count = 1;
-
     let currentX = currentRow + offsetX;
     let currentY = currentColumn + offsetY;
 
@@ -211,8 +210,8 @@ export class Game extends Component {
       } 
     }
 
-    currentX = currentRow - offsetX * count;
-    currentY = currentColumn - offsetY * count;
+    currentX = currentRow - offsetX;
+    currentY = currentColumn - offsetY;
     while (currentX < this.state.boardWidth && currentX >= 0 && currentY < this.state.boardHeight && currentY >= 0) {
       if (this.state.game[currentX][currentY] === currentPlayer) {
         currentX = currentX - offsetX;
