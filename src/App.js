@@ -38,7 +38,6 @@ class App extends Component {
       this.state['gameId'] = window.location.search.slice(4);
     }
 
-
     this.handleChange = this.handleChange.bind(this);
     this.handleCheckBox = this.handleCheckBox.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -117,7 +116,7 @@ class App extends Component {
         <form onSubmit={this.handleSubmit}>
           <label>
             Connect X?
-            <input type="number" value={this.state.target} onChange={this.handleChange} />
+            <input type="number" name="target" value={this.state.target} onChange={this.handleChange} />
           </label>
           <br />
           <label>

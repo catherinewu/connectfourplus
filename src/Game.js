@@ -223,7 +223,7 @@ export class Game extends Component {
       } 
     }
 
-    return (count >= 4) ? true: false;
+    return (count >= this.state.target) ? true: false;
 
   }
 
