@@ -27,6 +27,7 @@ export class Game extends Component {
     this.validateMove = this.validateMove.bind(this);
     this.checkGameOver = this.checkGameOver.bind(this);
     this.checkOffset = this.checkOffset.bind(this);
+    this.validateCoordinateWithinBoard = this.validateCoordinateWithinBoard.bind(this);
 
     this.props.database.ref('games/' + this.props.gameId + '/events').on("child_added", this.handleEvent);
   }
@@ -116,10 +117,18 @@ export class Game extends Component {
 
   handleMove = (e) => {
     const [i, j] = getPosition(e.pageX, e.pageY);
+    const valid = this.validateCoordinateWithinBoard(i, j);
     const {ghost} = this.state;
-    if (!ghost || ghost.i !== i || ghost.j !== j) {
+    if (valid && (!ghost || ghost.i !== i || ghost.j !== j)) {
       this.setState({ ghost: {i, j} });
     }
+  }
+  
+  validateCoordinateWithinBoard(i, j) {
+    if (i < this.state.boardWidth && i >= 0 && j < this.state.boardHeight && j >= 0) {
+      return true;
+    }
+    return false;
   }
 
   handleClick(event) {
@@ -200,7 +209,8 @@ export class Game extends Component {
     let currentX = currentRow + offsetX;
     let currentY = currentColumn + offsetY;
 
-    while (currentX < this.state.boardWidth && currentX >= 0 && currentY < this.state.boardHeight && currentY >= 0) {
+    while (this.validateCoordinateWithinBoard(currentX, currentY)) {
+    // while (currentX < this.state.boardWidth && currentX >= 0 && currentY < this.state.boardHeight && currentY >= 0) {
       if (this.state.game[currentX][currentY] === currentPlayer) {
         currentX = currentX + offsetX;
         currentY = currentY + offsetY;
@@ -212,7 +222,8 @@ export class Game extends Component {
 
     currentX = currentRow - offsetX;
     currentY = currentColumn - offsetY;
-    while (currentX < this.state.boardWidth && currentX >= 0 && currentY < this.state.boardHeight && currentY >= 0) {
+    while (this.validateCoordinateWithinBoard(currentX, currentY)) {
+    // while (currentX < this.state.boardWidth && currentX >= 0 && currentY < this.state.boardHeight && currentY >= 0) {
       if (this.state.game[currentX][currentY] === currentPlayer) {
         currentX = currentX - offsetX;
         currentY = currentY - offsetY;
