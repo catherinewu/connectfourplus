@@ -139,15 +139,13 @@ export class Game extends Component {
     return false;
   }
 
-  handleClick(event) {
+  async handleClick(event) {
     let rect = this.canvasRef.current.getBoundingClientRect(); 
     var x = event.pageX - rect.left,
         y = event.pageY - rect.top;
     let [i, j] = getPosition(x, y);
     console.log('position is ', i, j);
 
-    // adjust for gravity
-    console.log('gravity', this.state.gravity);
     if (this.state.gravity) {
       i = -1;
       for (let xPos = this.state.boardHeight - 1; xPos >= 0; xPos--) {
@@ -163,7 +161,7 @@ export class Game extends Component {
     const valid = this.validateMove(currentPlayer, i, j);
     if (valid) {
       console.log('making move');
-      this.makeMove(i, j);
+      await this.makeMove(i, j);
     }
     const gameOver = this.checkGameOver(currentPlayer, i, j);
     if (gameOver) {
@@ -198,6 +196,7 @@ export class Game extends Component {
     return true;
   }
 
+  // [[0,0,0,2,1,0,0,0,0],[0,0,1,1,2,2,0,0,0],[0,0,1,2,1,2,0,2,0],[0,0,1,2,2,2,2,1,1],[1,0,1,1,2,1,2,2,1],[2,0,1,2,1,1,2,1,2],[1,1,2,1,2,1,2,2,1]]
   checkGameOver(currentPlayer, currentRow, currentColumn) {
     const game = this.state.game;
     const offsetTuplesToCheck = [{x: -1, y:1}, {x: -1, y:0}, {x:-1, y:-1}, {x:0, y:-1}];
@@ -246,8 +245,8 @@ export class Game extends Component {
 
   }
 
-  makeMove(i, j) {
-    this.props.database.ref('games/' + this.state.gameId + '/events').push({ type: 'player_move', i, j });
+  async makeMove(i, j) {
+    return this.props.database.ref('games/' + this.state.gameId + '/events').push({ type: 'player_move', i, j });
   }
 
   currentPlayer() {
@@ -263,11 +262,11 @@ export class Game extends Component {
     let currentPlayer = this.currentPlayer();
 
     if (this.state.playerNumber === currentPlayer) {
-      whosturn = `It is your turn. You are ${this.state.playerNumber ? 'black' : 'red'}.`;
+      whosturn = `It is your turn. You are ${this.state.playerNumber === 1 ? 'black' : 'red'}.`;
     } else if (this.state.playerNumber > 2) {
       whosturn = 'You are spectating';
     } else {
-      whosturn = `It is not your turn. You are ${this.state.playerNumber ? 'black' : 'red'}.`;
+      whosturn = `It is not your turn. You are ${this.state.playerNumber === 1 ? 'black' : 'red'}.`;
     }
     return (
         <div>
