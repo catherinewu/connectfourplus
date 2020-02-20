@@ -44,10 +44,15 @@ export class Game extends Component {
     var e = snapshot.val();
     if (e.type == 'player_move') {
       const {i, j} = e;
-      let game = _.cloneDeep(this.state.game);
-      console.log(this.currentPlayer());
-  
+      let game = _.cloneDeep(this.state.game);  
       game[i][j] = this.currentPlayer();
+      
+      const gameOver = this.checkGameOver(game, i, j);
+      if (gameOver) {
+        window.alert(`Winner is: ${this.currentPlayer() === 1 ? 'black' : 'red'}`);
+        this.state.gameEnded = true;
+      }    
+
       console.log(game);
       this.setState({ game });
     } else if (e.type == 'initialize') {
@@ -139,7 +144,7 @@ export class Game extends Component {
     return false;
   }
 
-  async handleClick(event) {
+  handleClick(event) {
     let rect = this.canvasRef.current.getBoundingClientRect(); 
     var x = event.pageX - rect.left,
         y = event.pageY - rect.top;
@@ -161,13 +166,55 @@ export class Game extends Component {
     const valid = this.validateMove(currentPlayer, i, j);
     if (valid) {
       console.log('making move');
-      await this.makeMove(i, j);
-    }
-    const gameOver = this.checkGameOver(currentPlayer, i, j);
-    if (gameOver) {
-      this.state.gameEnded = true;
+      this.makeMove(i, j);
     }
   }
+
+  checkGameOver(game, currentRow, currentColumn) {
+    const currentPlayer = game[currentRow][currentColumn];
+    const offsetTuplesToCheck = [{x: -1, y:1}, {x: -1, y:0}, {x:-1, y:-1}, {x:0, y:-1}];
+    for (let i = 0; i < offsetTuplesToCheck.length; i++) {
+      const offsetX = offsetTuplesToCheck[i].x;
+      const offsetY = offsetTuplesToCheck[i].y;
+      const checkOffsetResult = this.checkOffset(game, currentPlayer, offsetX, offsetY, currentRow, currentColumn);
+      if (checkOffsetResult) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  checkOffset(game, currentPlayer, offsetX, offsetY, currentRow, currentColumn) {
+  let count = 1;
+  let currentX = currentRow + offsetX;
+  let currentY = currentColumn + offsetY;
+
+  while (this.validateCoordinateWithinBoard(currentX, currentY)) {
+  // while (currentX < this.state.boardWidth && currentX >= 0 && currentY < this.state.boardHeight && currentY >= 0) {
+    if (game[currentX][currentY] === currentPlayer) {
+      currentX = currentX + offsetX;
+      currentY = currentY + offsetY;
+      count = count + 1;
+    } else {
+      break;
+    } 
+  }
+
+  currentX = currentRow - offsetX;
+  currentY = currentColumn - offsetY;
+  while (this.validateCoordinateWithinBoard(currentX, currentY)) {
+  // while (currentX < this.state.boardWidth && currentX >= 0 && currentY < this.state.boardHeight && currentY >= 0) {
+    if (game[currentX][currentY] === currentPlayer) {
+      currentX = currentX - offsetX;
+      currentY = currentY - offsetY;
+      count = count + 1;
+    } else {
+      break;
+    } 
+  }
+
+  return (count >= this.state.target) ? true: false;
+}
 
   // returns boolean
   validateMove(currentPlayer, i, j) {
@@ -196,56 +243,7 @@ export class Game extends Component {
     return true;
   }
 
-  // [[0,0,0,2,1,0,0,0,0],[0,0,1,1,2,2,0,0,0],[0,0,1,2,1,2,0,2,0],[0,0,1,2,2,2,2,1,1],[1,0,1,1,2,1,2,2,1],[2,0,1,2,1,1,2,1,2],[1,1,2,1,2,1,2,2,1]]
-  checkGameOver(currentPlayer, currentRow, currentColumn) {
-    const game = this.state.game;
-    const offsetTuplesToCheck = [{x: -1, y:1}, {x: -1, y:0}, {x:-1, y:-1}, {x:0, y:-1}];
-    for (let i = 0; i < offsetTuplesToCheck.length; i++) {
-      const x = offsetTuplesToCheck[i].x;
-      const y = offsetTuplesToCheck[i].y;
-      const checkOffsetResult = this.checkOffset(currentPlayer, x, y, currentRow, currentColumn);
-      if (checkOffsetResult) {
-        window.alert(`GAME WON by ${(currentPlayer === 1)? 'black' : 'red'}`);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  checkOffset(currentPlayer, offsetX, offsetY, currentRow, currentColumn) {
-    let count = 1;
-    let currentX = currentRow + offsetX;
-    let currentY = currentColumn + offsetY;
-
-    while (this.validateCoordinateWithinBoard(currentX, currentY)) {
-    // while (currentX < this.state.boardWidth && currentX >= 0 && currentY < this.state.boardHeight && currentY >= 0) {
-      if (this.state.game[currentX][currentY] === currentPlayer) {
-        currentX = currentX + offsetX;
-        currentY = currentY + offsetY;
-        count = count + 1;
-      } else {
-        break;
-      } 
-    }
-
-    currentX = currentRow - offsetX;
-    currentY = currentColumn - offsetY;
-    while (this.validateCoordinateWithinBoard(currentX, currentY)) {
-    // while (currentX < this.state.boardWidth && currentX >= 0 && currentY < this.state.boardHeight && currentY >= 0) {
-      if (this.state.game[currentX][currentY] === currentPlayer) {
-        currentX = currentX - offsetX;
-        currentY = currentY - offsetY;
-        count = count + 1;
-      } else {
-        break;
-      } 
-    }
-
-    return (count >= this.state.target) ? true: false;
-
-  }
-
-  async makeMove(i, j) {
+  makeMove(i, j) {
     return this.props.database.ref('games/' + this.state.gameId + '/events').push({ type: 'player_move', i, j });
   }
 
