@@ -107,7 +107,6 @@ export class Game extends Component {
   }
 
   componentDidUpdate() {
-    console.log('componentDidUpdate')
     this.draw();
   }
 
@@ -122,10 +121,7 @@ export class Game extends Component {
 
   handleMove = (e) => {
     let rect = this.canvasRef.current.getBoundingClientRect(); 
-    console.log('rect left, top:', rect.left, rect.top);
-            // let x = event.clientX - rect.left; 
-            // let y = event.clientY - rect.top; 
-    let [i, j] = getPosition(e.pageX - rect.left, e.pageY - rect.top);
+    let [i, j] = getPosition(e.pageX - rect.left - window.pageXOffset, e.pageY - rect.top - window.pageYOffset);
     const valid = this.validateCoordinateWithinBoard(i, j);
     const {ghost} = this.state;
     if (valid && (!ghost || ghost.i !== i || ghost.j !== j)) {
