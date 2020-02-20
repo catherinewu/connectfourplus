@@ -87,10 +87,10 @@ export class Game extends Component {
     } else {
       console.log('playerAddEvents?', playerAddEvents);
       if (playerAddEvents.length >= 2) {
-        window.alert('sorry, enough players already. you are just watching');
+        window.alert('Sorry, there are 2 players already. You are just watching');
         this.state.playerNumber = 0;
       } else {
-        window.alert('you are added to the game as player 2');
+        window.alert('You are the RED player');
         this.props.database.ref('games/' + this.props.gameId + '/events').push({
           type: 'add_player',
           browserId: this.state.browserId,
@@ -116,14 +116,22 @@ export class Game extends Component {
   }
 
   handleMove = (e) => {
-    const [i, j] = getPosition(e.pageX, e.pageY);
+    let rect = this.canvasRef.current.getBoundingClientRect(); 
+    console.log('rect left, top:', rect.left, rect.top);
+            // let x = event.clientX - rect.left; 
+            // let y = event.clientY - rect.top; 
+    let [i, j] = getPosition(e.pageX - rect.left, e.pageY - rect.top);
     const valid = this.validateCoordinateWithinBoard(i, j);
     const {ghost} = this.state;
     if (valid && (!ghost || ghost.i !== i || ghost.j !== j)) {
       this.setState({ ghost: {i, j} });
+    } else if (!valid) {
+      i = -1;
+      j = -1;
+      this.setState({ ghost: {i, j} });
     }
   }
-  
+
   validateCoordinateWithinBoard(i, j) {
     if (i < this.state.boardWidth && i >= 0 && j < this.state.boardHeight && j >= 0) {
       return true;
@@ -132,8 +140,9 @@ export class Game extends Component {
   }
 
   handleClick(event) {
-    var x = event.pageX,
-        y = event.pageY;
+    let rect = this.canvasRef.current.getBoundingClientRect(); 
+    var x = event.pageX - rect.left,
+        y = event.pageY - rect.top;
     let [i, j] = getPosition(x, y);
     console.log('position is ', i, j);
 
@@ -166,24 +175,24 @@ export class Game extends Component {
   validateMove(currentPlayer, i, j) {
     // todo: check number of players
     if (this.state.gameEnded) {
-      window.alert('cannot move -- game has already ended');
+      window.alert('Game has already ended');
       return false;
     }
     const validPosition = this.state.boardHeight >= 0 && i < this.state.boardHeight && this.state.boardWidth >= 0 && j < this.state.boardWidth;
     if (!validPosition) {
-      window.alert('position is not valid');
+      window.alert('Out of bounds');
       return false;
     }
 
     if (this.state.game[i][j] !== 0) {
       console.log('game is', this.state.game);
-      window.alert('someone has already moved there');
+      window.alert('Position is already taken');
       return false;
     }
 
     const validPlayer = currentPlayer === this.state.playerNumber;
     if (!validPlayer) {
-      window.alert(`currentPlayer ${currentPlayer} does not equal this.state.playerNumber ${this.state.playerNumber}`);
+      window.alert('It is not your turn');
       return false;
     }
     return true;
@@ -197,7 +206,7 @@ export class Game extends Component {
       const y = offsetTuplesToCheck[i].y;
       const checkOffsetResult = this.checkOffset(currentPlayer, x, y, currentRow, currentColumn);
       if (checkOffsetResult) {
-        window.alert('GAME WON by player ', self.current_player);
+        window.alert(`GAME WON by ${(currentPlayer === 1)? 'black' : 'red'}`);
         return true;
       }
     }
@@ -250,16 +259,28 @@ export class Game extends Component {
   }
 
   render() {
-    var whosturn = `It is Player ${(this.currentPlayer() === 1) ? 1 : 2}'s turn`;
+    let whosturn;
+    let currentPlayer = this.currentPlayer();
+
+    if (this.state.playerNumber === currentPlayer) {
+      whosturn = `It is your turn. You are ${this.state.playerNumber ? 'black' : 'red'}.`;
+    } else if (this.state.playerNumber > 2) {
+      whosturn = 'You are spectating';
+    } else {
+      whosturn = `It is not your turn. You are ${this.state.playerNumber ? 'black' : 'red'}.`;
+    }
     return (
         <div>
-        {/* <h3>You're playing connect {this.state.target}!</h3> */}
-        {/* <h3>{whosturn}</h3> */}
-        <canvas
-          ref={this.canvasRef}
-          width="3000" height="3000"
-          onClick={(e) => this.handleClick(e)}
-          onMouseMove={this.handleMove}></canvas>
+          <div className='gameInfo'>
+            <h3>Welcome to Connect {this.state.target}! <br/> {whosturn}</h3> 
+            {/* <h3>{whoareyou}</h3> */}
+          </div>
+          <canvas
+            ref={this.canvasRef}
+            width={this.state.boardWidth * WIDTH} height={this.state.boardHeight * WIDTH}
+            onClick={(e) => this.handleClick(e)}
+            onMouseMove={this.handleMove}>
+          </canvas>
         </div>
     );
   }
